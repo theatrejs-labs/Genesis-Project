@@ -17,7 +17,11 @@
     "importHelpers": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": false
+  },
+  "rules": {
+    "object-literal-sort-keys": false,
+    "no-empty-interface": false
   },
   "exclude": [
     "node_modules",
