@@ -6,6 +6,9 @@ export const particlesProps = {
         heightScale: {
             type: 'number'
         },
+        hue: {
+            type: 'number'
+        },
         p: {
             type: 'number'
         },

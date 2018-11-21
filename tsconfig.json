@@ -17,13 +17,12 @@
     "importHelpers": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": false
-  },
-  "rules": {
-    "object-literal-sort-keys": false,
-    "no-empty-interface": false
+    "noUnusedLocals": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
   },
   "exclude": [
+    "public",
     "node_modules",
     "build",
     "scripts",

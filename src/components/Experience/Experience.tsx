@@ -1,4 +1,5 @@
 import * as React from 'react';
+import AnimationState from '../../data/theatre/theatre-export.json';
 import { Animation } from './Animation'
 
 interface IProps {
@@ -11,7 +12,7 @@ export class Experience extends React.Component<IProps, {}> {
     private container: HTMLDivElement | null;
 
     public componentDidMount () {
-        this.animation = new Animation(this.container, window.innerWidth, window.innerHeight);
+        this.animation = new Animation(this.container, window.innerWidth, window.innerHeight, AnimationState);
         window.addEventListener('resize', this.handleResize.bind(this));
     }
 
