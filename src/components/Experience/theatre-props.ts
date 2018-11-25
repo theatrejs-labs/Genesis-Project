@@ -64,3 +64,14 @@ export const cameraProps = {
         }
     }
 };
+
+export const containerProps = {
+    props: {
+        scale: {
+            type: 'number'
+        },
+        top: {
+            type: 'number'
+        }
+    }
+}

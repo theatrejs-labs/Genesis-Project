@@ -3,10 +3,12 @@
   "rules": {
     "object-literal-sort-keys": false,
     "no-empty-interface": false,
-    "no-unused-expression": false
+    "no-unused-expression": false,
+    "no-console": false
   },
   "linterOptions": {
     "exclude": [
+      "**/*.js",
       "public/**/*.js",
       "config/**/*.js",
       "node_modules/**/*.ts",

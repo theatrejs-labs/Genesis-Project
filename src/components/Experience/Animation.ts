@@ -2,7 +2,7 @@ import {
     Sound
 } from './tools/Sound';
 
-import { cameraProps, particlesProps } from './theatre-props';
+import { cameraProps, containerProps, particlesProps } from './theatre-props';
 import { Knot } from './tools/Knot';
 
 declare var AudioContext: any;
@@ -14,15 +14,18 @@ AudioContext = AudioContext || webkitAudioContext;
 
 export class Animation {
 
-    private knot: any;
-    private sound: any;
-    private state: any;
-    private theatre: {
+    public theatre: {
         project?: any,
         timeline?: any
     };
 
+    private container: HTMLDivElement | null;
+    private knot: any;
+    private sound: any;
+    private state: any;
+
     constructor(container: HTMLDivElement | null, width: number, height: number, state?: any) {
+        this.container = container;
         this.state = state || null;
         this.knot = new Knot(container, width, height);
         this.initializeTheatre();
@@ -67,6 +70,7 @@ export class Animation {
         this.theatre.timeline = this.theatre.project.getTimeline('Timeline');
         this.initializeTheatreForParticles();
         this.initializeTheatreForCamera();
+        this.initializeTheatreForContainer();
     }
 
     private initializeTheatreForParticles() {
@@ -88,6 +92,14 @@ export class Animation {
             this.knot.camera.position.y = values.positionY;
             this.knot.camera.position.z = values.positionZ;
             this.knot.camera.lookAt(new THREE.Vector3(10, 0, 0));
+        })
+    }
+
+    private initializeTheatreForContainer() {
+        const object = this.theatre.timeline.createObject('Canvas', this.container, containerProps);
+        object.onValuesChange((values: any) => {
+            if (!this.container) { return; }
+            this.container.style.transform = `scale(${values.scale}) translate3d(0px, ${values.top}px, 1px)`;
         })
     }
 
