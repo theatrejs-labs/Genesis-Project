@@ -166,7 +166,6 @@ function onLevelChange(time) {
         state.average = state.levelsSum / state.levelsCount;
     }
     else {
-        console.log(volume, state.average)
         if (volume > ((state.average * 0.8) + 12)) {
             for (let cb of onBlowListeners) cb(volume);
         }

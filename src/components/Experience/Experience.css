@@ -25,3 +25,10 @@ h2.message-box {
 h2.message-box.show {
     opacity: 1;
 }
+
+h2.message-box > img {
+    width: 180px;
+    display: block;
+    margin: auto;
+    margin-bottom: 20px;
+}
