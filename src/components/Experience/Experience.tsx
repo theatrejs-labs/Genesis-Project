@@ -89,8 +89,8 @@ export class Experience extends React.Component<IProps, IState> {
     }
 
     private onBlow(volume: number): void {
-        this.blowSpeed += 0.0016;
-        if (this.blowSpeed > 0.028) { this.blowSpeed = 0.028; }
+        this.blowSpeed += 0.0012;
+        if (this.blowSpeed > 0.018) { this.blowSpeed = 0.018; }
     }
 
     private handleResize() {
@@ -111,12 +111,12 @@ export class Experience extends React.Component<IProps, IState> {
                 this.showMessage('Blow again! harder this time', 2000, 'blow.svg');
                 this.blowedUp = false;
             }
-            if (timeline.time > 4.9) {
+            if (timeline.time > 1.7) {
                 this.stopBlowingMode();
                 timeline.play();
             }
         }
-        if (timeline.time > 50 && !this.editSuggestionShownUp) {
+        if (timeline.time > 55 && !this.editSuggestionShownUp) {
             this.showMessage('To edit this animation press "E"', Infinity, 'animation.svg');
             this.editSuggestionShownUp = true;
         }
