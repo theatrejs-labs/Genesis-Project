@@ -2,12 +2,12 @@ import * as React from 'react';
 import AnimationState from '../../data/theatre/theatre-export.json';
 import { Animation } from './Animation'
 
-import { breathingAlgorithm as blow } from './tools/BreathDetection';
+import { onBlow } from './tools/BreathDetection';
 
 import './Experience.css'
 
 interface IProps {
- 
+
 }
 
 interface IState {
@@ -19,69 +19,83 @@ export class Experience extends React.Component<IProps, IState> {
     private animation: Animation;
     private blowingMode: boolean;
     private container: HTMLDivElement | null;
+    private messageBox: HTMLHeadingElement | null;
     private blowSpeed: number;
 
-    constructor (props: IProps) {
+    constructor(props: IProps) {
         super(props);
         this.blowSpeed = 0;
         this.blowingMode = false;
         this.state = {
-            isFront: false
+            isFront: true
         }
         window.onkeypress = (e: any) => {
             if (e.key === 'f') {
                 this.setState({ isFront: !this.state.isFront });
             }
         };
-        blow.events.onRunning = () => {
-            this.blowSpeed += 0.002;
-            if (this.blowSpeed > 0.035) {
-                this.blowSpeed = 0.035;
-            }
-        };
-        this.startBlowingMode();
     }
 
-    public startBlowingMode () {
-        this.blowingMode = true;
-        blow.run();
+    public startBlowingMode(timeout = 10) {
+        setTimeout(() => {
+            this.blowingMode = true;
+            this.showMessage('Start Blowing');
+            onBlow((volume: number) => { if (this.blowingMode) { this.onBlow(volume) } });
+        }, timeout);
     }
 
-    public stopBlowingMode () {
+    public stopBlowingMode() {
         this.blowingMode = false;
     }
 
-    public componentDidMount () {
+    public componentDidMount() {
         this.animation = new Animation(this.container, window.innerWidth, window.innerHeight, AnimationState);
         window.addEventListener('resize', this.handleResize.bind(this));
+        this.startBlowingMode(1000);
         this.changes();
     }
 
-    public render () {
-        return (<div
-            className="experience"
-            style={{
-                zIndex: this.state.isFront ? 999999999 : 1
-            }}
-            ref={ref => this.container = ref} />)
+    public showMessage(message: string): void {
+        if (!this.messageBox) { return };
+        this.messageBox.innerHTML = message;
+        this.messageBox.classList.add('show');
+        setTimeout(() => {
+            if (this.messageBox) { this.messageBox.classList.remove('show'); }
+        }, 1000);
+    }
+
+    public render() {
+        return (<>
+            <h2 className="message-box" ref={ref => this.messageBox = ref}>Message</h2>
+            <div
+                className="experience"
+                style={{
+                    zIndex: this.state.isFront ? 999999999 : 1
+                }}
+                ref={ref => this.container = ref} />
+        </>)
+    }
+
+    private onBlow(volume: number): void {
+        this.blowSpeed += 0.0016;
     }
 
     private handleResize() {
         this.animation.resize(window.innerWidth, window.innerHeight);
     }
 
-    private goFullscreen () {
+    private goFullscreen() {
         if (!this.container) { return; }
         if (this.container.requestFullscreen) {
             this.container.requestFullscreen();
         };
     }
 
-    private changes () {
+    private changes() {
         requestAnimationFrame(() => this.changes());
         const timeline = this.animation.theatre.timeline;
         if (this.blowingMode) {
-            timeline.time += this.blowSpeed;
+            if (timeline.time + this.blowSpeed >= 0) { timeline.time += this.blowSpeed; }
             this.blowSpeed = this.blowSpeed > -0.003 ? this.blowSpeed - 0.001 : -0.003;
             if (timeline.time > 4.9) {
                 this.stopBlowingMode();

@@ -1,328 +1,179 @@
-// https://github.com/Breathinglabs/JS-Breathing-Detection/blob/master/js/algorithm.js
+/*
+The MIT License (MIT)
+Copyright (c) 2014 Chris Wilson
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
-export var breathingAlgorithm = {
+/*
+Usage:
+audioNode = createAudioMeter(audioContext,clipLevel,averaging,clipLag);
+audioContext: the AudioContext you're using.
+clipLevel: the level (0 to 1) that you would consider "clipping".
+   Defaults to 0.98.
+averaging: how "smoothed" you would like the meter to be over time.
+   Should be between 0 and less than 1.  Defaults to 0.95.
+clipLag: how long you would like the "clipping" indicator to show
+   after clipping has occured, in milliseconds.  Defaults to 750ms.
+Access the clipping through node.checkClipping(); use node.shutdown to get rid of it.
+*/
 
-    events: {
-        fireOffEvent: () => { return; },
-        fireOnEvent: () => { return; },
-        offRunning: () => { return; },
-        onRunning: () => { return; }
-    },
-    noiseLevelConst: 5000,		//Constant we add to noise level for fast on event TOF
-    noiseOffConst: 2000,			//Constant we add to noise level for fast off event
-    noiseOffSlowConst: 2000,			//Constant we add to noise level for fast off event
-    onFastConstant: -0.4,		//Constant we multiply max variance to get minimum
-    onFastNumOfVar: 4,			//Minimum variable to check if they pass windowCondition_2
-    offSlowNumOfPow: 10,			//Minimum variable to check if they pass windowCondition_2
-    offFastConst: 0.5,			//Off fast event constant to multiply with onFastConstant
-    functionRunning: false,	//Tells if blow detection is on, if true we are exhaling
-    ThrOnFast: 1,				//Threshold for our fast on event
-    ThrOffFast: 1,				//Threshold for our fast off event
-    ThrOffSlow: 1,					//Threshold for our slow off event
-    maxVariance: 0,
-    minVariance: 0,
-    pow: 0,						//Sum of all frequency element data(b.frequencyBin) - power
-    noiseLevel: -1,			//Noise level (room)
-    pwVariance: 0,				//Our current variance 
-    varOffVar: 0,
-    sampleSize: 1024, // number of samples to collect before analyzing data
-    fftSize: 1024, // must be power of two // **
-    frequencyBin: new Array,	//Put all frequency element data in array
-    countBlow: 0,			//Detected blow count for determining noise level calculation time
-    windowArray: new Array,	//For variance storage FIFO for determining slow or fast event
-    vcd: 0,					//For b.b.windowArray array size
-    windowArray_2: new Array,	//For variance storage when b.pow > b.ThrOnFast
-    vcd_2: 0,					//For b.b.windowArray_2 array size
-    mainCondition: false,		//If b.pow > b.ThrOnFast - if true it is
-    offFastVar: 0,
-    offFastVarCount: 0,
-    pcd: 0,					//Number of elements in arrays for slow events
-    PowerWindow: new Array,	//Array for b.pow to help us calculate variance b.pwVariance
-    pw: 0,
+function createAudioMeter(audioContext, clipLevel, averaging, clipLag) {
+    var processor = audioContext.createScriptProcessor(512);
+    processor.onaudioprocess = volumeAudioProcess;
+    processor.clipping = false;
+    processor.lastClip = 0;
+    processor.volume = 0;
+    processor.clipLevel = clipLevel || 0.98;
+    processor.averaging = averaging || 0.95;
+    processor.clipLag = clipLag || 750;
 
-    run: function (pfu) {
+    // this will have no effect, since we don't copy the input to the output,
+    // but works around a current Chrome bug.
+    processor.connect(audioContext.destination);
 
+    processor.checkClipping =
+        function () {
+            if (!this.clipping)
+                return false;
+            if ((this.lastClip + this.clipLag) < window.performance.now())
+                this.clipping = false;
+            return this.clipping;
+        };
 
+    processor.shutdown =
+        function () {
+            this.disconnect();
+            this.onaudioprocess = null;
+        };
 
-        //add your own parameters here
+    return processor;
+}
 
-        this.pfu = pfu || {};
+function volumeAudioProcess(event) {
+    var buf = event.inputBuffer.getChannelData(0);
+    var bufLength = buf.length;
+    var sum = 0;
+    var x;
 
-        if (this.pfu.onFNlc) {//On event: noise level constant nl + ...
-            b.noiseLevelConst = this.pfu.onFNlc;
+    // Do a root-mean-square on the samples: sum up the squares...
+    for (var i = 0; i < bufLength; i++) {
+        x = buf[i];
+        if (Math.abs(x) >= this.clipLevel) {
+            this.clipping = true;
+            this.lastClip = window.performance.now();
         }
-
-        if (this.pfu.onFvar) {//On event number of variances to check
-            b.onFastNumOfVar = this.pfu.onFvar;
-        }
-
-        if (this.pfu.onFCvar) {//On event variable constant max.var * ...
-            b.onFastConstant = this.pfu.onFCvar;
-            b.onFastConstant = -1 * b.onFastConstant;
-        }
-
-        /*Notification microphone acces window, if allowed go to goStream function*/
-        getUserMedia({ audio: true }, goStream);
+        sum += x * x;
     }
-};
 
-var b = breathingAlgorithm;
-var sourceNode, analyserNode, javascriptNode;
+    // ... then take the square root of the sum.
+    var rms = Math.sqrt(sum / bufLength);
 
-//Create audioContext
-window.AudioContext = window.AudioContext ||
-    window.webkitAudioContext ||
-    window.mozAudioContext ||
-    window.oAudioContext ||
-    window.msAudioContext;
+    // Now smooth this out with the averaging factor applied
+    // to the previous sample - take the max here because we
+    // want "fast attack, slow release."
+    this.volume = Math.max(rms, this.volume * this.averaging);
+}
 
-var audioContext = new AudioContext();
+var audioContext = null;
+var meter = null;
+var canvasContext = null;
+var WIDTH = 500;
+var HEIGHT = 50;
+var rafID = null;
 
-/*getUserMedia function def and prefix*/
-function getUserMedia(dictionary, callback) {
+window.onload = function () {
+
+    // grab our canvas
+    canvasContext = document.createElement('canvas').getContext("2d");
+
+    // monkeypatch Web Audio
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    // grab an audio context
+    audioContext = new AudioContext();
+
+    // Attempt to get audio input
     try {
-        navigator.getUserMedia = navigator.getUserMedia ||
+        // monkeypatch getUserMedia
+        navigator.getUserMedia =
+            navigator.getUserMedia ||
             navigator.webkitGetUserMedia ||
             navigator.mozGetUserMedia;
 
-        navigator.getUserMedia(dictionary, callback, error);
-    }
-    catch (e) {
-        alert('getUserMedia threw exception :' + e);
-    }
-}
-
-/*Main function goStream for signal processing and exhalation algorithm process*/
-function goStream(stream) {
-    var frequencyArray; // array to hold frequency data
-
-    // create the media stream from the audio input source (microphone)
-    sourceNode = audioContext.createMediaStreamSource(stream);
-    const audioStream = stream;
-
-    analyserNode = audioContext.createAnalyser();
-
-    analyserNode.smoothingTimeConstant = 0.3; // **
-    analyserNode.fftSize = b.fftSize; // **
-
-    javascriptNode = audioContext.createScriptProcessor(b.sampleSize, 1, 1);
-
-    // setup the event handler that is triggered every time enough samples have been collected
-    javascriptNode.onaudioprocess = function () {
-        b.pow = 0;
-
-        frequencyArray = new Uint8Array(analyserNode.frequencyBinCount);
-        analyserNode.getByteFrequencyData(frequencyArray);
-
-        //put in all frequencyArray data						
-        for (var i = 0; i < frequencyArray.length; i++) {
-            b.frequencyBin[i] = frequencyArray[i];
-        }
-
-        //sum all data in array
-        for (let sth of b.frequencyBin) {
-            b.pow += sth;
-        };
-
-        //set noise level increase noise level and if current is > than saved then current is our new noise level(room)
-        if (b.noiseLevel == -1) {		//For very first input signal, just to set it on  
-            b.noiseLevel = b.pow;
-        } else {				//Setting noise level on off event and first 30 on event signals  
-            if (b.pow < b.noiseLevel) {
-                b.noiseLevel = b.pow;
-            } else if (b.pow > b.noiseLevel) {
-
-                if (b.countBlow < 30) {
-                    b.noiseLevel = b.noiseLevel + 10;			//noise level
-                } else if (b.countBlow > 30) {
-                    b.noiseLevel = b.noiseLevel + 0;			//noise level
-                }
-            }
-        }
-
-        //Setting all thresholds for our on events
-        b.ThrOnFast = Math.round(b.noiseLevel + b.noiseLevelConst);
-        b.ThrOffFast = Math.round(b.noiseLevel + b.noiseOffConst);
-        b.ThrOffSlow = Math.round(b.noiseLevel + b.noiseOffSlowConst);
-
-        //Calculating variances - putting each b.pow in array and the sub current and one past
-        b.PowerWindow[b.pw] = b.pow;
-        if (b.pw > 0 && b.pw < 500) {
-            b.pwVariance = Math.round(b.PowerWindow[b.pw] - b.PowerWindow[b.pw - 1]);
-        }
-
-        else if (b.pw > 500) {
-            b.pw = 0;
-            b.PowerWindow.length = 0;
-        }
-        b.pw++;
-
-        //Check if function for when exhalation is detected (on event) is running
-        if (b.functionRunning == false) {
-            b.countBlow = 0;
-            b.events.offRunning();
-            onEvent(b.pow, b.pwVariance);
-        }
-
-        //Check if function for when exhalation is not detected (off event) is running				
-        else if (b.functionRunning == true) {
-            b.countBlow++;
-            b.events.onRunning();
-            offEvent(b.pow, b.pwVariance);
-        }
-
-    }
-
-    // Now connect the nodes together
-    // Do not connect source node to destination - to avoid feedback
-    sourceNode.connect(analyserNode);
-    analyserNode.connect(javascriptNode);
-    javascriptNode.connect(audioContext.destination);
-
-}
-
-//Error function
-function error() {
-    alert('Stream generation failed');
-}
-
-//Events that are triggered on on and off event
-var doEvent = function () {
-    return {
-        stop: function () {
-            b.events.fireOffEvent();
-        },
-
-        start: function () {
-            b.events.fireOnEvent();
-            b.functionRunning = true;
-        }
-    };
-}();
-
-//Function for checking if variances are in certen interval
-function CheckOn(value, index, ar) {
-    if (value > b.minVariance && value < -1 * b.minVariance)
-        return true;
-    else
-        return false;
-}
-
-
-/* ALGORITHM FOR DETECTING ON EVENTS */
-function onEvent(getTotal, getVariance) {
-
-    //FAST 
-    //calculate max and min variance and set b.mainCondition on true when done
-    if (getTotal > b.ThrOnFast && b.mainCondition == false) {
-        //when variance > 0 count max and set min variance
-        if (getVariance > 0 && getVariance > b.maxVariance) {
-            b.maxVariance = getVariance;
-            b.minVariance = Math.round(b.onFastConstant * b.maxVariance);
-            b.varOffVar = b.minVariance * b.offFastConst;
-            //when variance < 0 get first neg variance and set b.mainCondition
-        } else if (getVariance < 0 && getVariance < b.maxVariance) {
-            b.mainCondition = true;
-        }
-    }
-
-    //when we get max and min variances we check if next 4(onFastNumOfVar) variances are bigger than b.minVariance.
-    else if (getTotal > b.ThrOnFast && b.mainCondition == true) {
-        b.windowArray[b.vcd] = getVariance;
-        if (b.vcd == b.onFastNumOfVar) {
-            if (b.windowArray.every(CheckOn)) {
-                b.functionRunning = true;
-
-                doEvent.start();
-            }
-            else {
-                b.mainCondition = false;
-                b.vcd = 0;
-                b.windowArray.length = 0;
-                b.maxVariance = 0;
-                b.minVariance = 0;
-            }
-        }
-        else {
-            b.vcd++;
-        }
-    }
-    //SLOW
-
-    if (b.pcd < 35) {
-        if (getTotal > b.ThrOnFast && getVariance > -3000) {
-            b.pcd++;
-        } else {
-            b.pcd = 0;
-        }
-    } else {
-        b.functionRunning = true;
-
-        doEvent.start();
-        b.pcd = 0;
-    }
-}
-
-function CheckOff(value, index, ar) {
-    if (value < b.ThrOffSlow)
-        return true;
-    else
-        return false;
-}
-
-/* ALGORITHM FOR DETECTING OFF EVENTS */
-function offEvent(getOffTotal, getOffVariance) {
-
-
-
-    //get min variable of the previous 20 variables	
-    if (b.offFastVarCount < 15) {
-        if (getOffVariance < b.offFastVar) {
-            b.offFastVar = getOffVariance;
-        } b.offFastVarCount++;
-    } else {
-        b.offFastVarCount = 0;
-    }
-
-    //FAST
-    if (getOffTotal < b.ThrOffFast && b.offFastVar < b.varOffVar) {
-
-        executeOffEv();
-
-    }
-
-    //SLOW
-    //If the last 10 b.pow < b.ThrOnFast/2
-    else if (getOffTotal < b.ThrOffFast && b.offFastVar > b.varOffVar) {
-        b.windowArray_2[b.vcd_2] = getOffTotal;
-        if (b.vcd_2 == b.offSlowNumOfPow) {
-            if (b.windowArray_2.every(CheckOff)) {
-
-                executeOffEv();
-            } else { }
-            b.windowArray_2.splice(0, 1);
-        }
-        else {
-            b.vcd_2++;
-        }
+        // ask for an audio input
+        navigator.getUserMedia({
+            "audio": {
+                "mandatory": {
+                    "googEchoCancellation": "false",
+                    "googAutoGainControl": "false",
+                    "googNoiseSuppression": "false",
+                    "googHighpassFilter": "false"
+                },
+                "optional": []
+            },
+        }, onMicrophoneGranted, onMicrophoneDenied);
+    } catch (e) {
+        console.log('getUserMedia threw exception :' + e);
     }
 
 }
 
-//function to be called if off event is triggered
-function executeOffEv() {
-    b.vcd = 0;
-    b.vcd_2 = 0;
-    b.pw = 0;
-    b.pcd = 0;
-    b.maxVariance = 0;
-    b.minVariance = 0;
-    b.varOffVar = 0;
-    b.mainCondition = false;
-    b.windowArray.length = 0;
-    b.windowArray_2.length = 0
-    b.offFastVar = 0;
-    b.offFastVarCount = 0;
-    b.functionRunning = false;
-    doEvent.stop();
+function onMicrophoneDenied() {
+    console.log('Stream generation failed.');
+}
+
+var mediaStreamSource = null;
+
+function onMicrophoneGranted(stream) {
+    // Create an AudioNode from the stream.
+    mediaStreamSource = audioContext.createMediaStreamSource(stream);
+
+    // Create a new volume meter and connect it.
+    meter = createAudioMeter(audioContext);
+    mediaStreamSource.connect(meter);
+
+    // kick off the visual updating
+    onLevelChange();
+}
+
+const state = {
+    levelsSum: 0,
+    levelsCount: 0,
+    average: 0
+}
+
+const onBlowListeners = [];
+
+function onLevelChange(time) {
+    const volume = Math.floor(meter.volume * 100);
+    if (state.levelsCount < 100) {
+        state.levelsSum += volume;
+        state.levelsCount++;
+        state.average = state.levelsSum / state.levelsCount;
+    }
+    else {
+        console.log(volume, state.average)
+        if (volume > ((state.average * 0.8) + 12)) {
+            for (let cb of onBlowListeners) cb(volume);
+        }
+    }
+    rafID = window.requestAnimationFrame(onLevelChange);
+}
+
+export const onBlow = (cb) => {
+    onBlowListeners.push(cb);
 }
