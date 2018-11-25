@@ -70,7 +70,6 @@ export class Animation {
         this.theatre.timeline = this.theatre.project.getTimeline('Timeline');
         this.initializeTheatreForParticles();
         this.initializeTheatreForCamera();
-        this.initializeTheatreForContainer();
     }
 
     private initializeTheatreForParticles() {
@@ -92,14 +91,6 @@ export class Animation {
             this.knot.camera.position.y = values.positionY;
             this.knot.camera.position.z = values.positionZ;
             this.knot.camera.lookAt(new THREE.Vector3(10, 0, 0));
-        })
-    }
-
-    private initializeTheatreForContainer() {
-        const object = this.theatre.timeline.createObject('Canvas', this.container, containerProps);
-        object.onValuesChange((values: any) => {
-            if (!this.container) { return; }
-            this.container.style.transform = `scale(${values.scale}) translate3d(0px, ${values.top}px, 1px)`;
         })
     }
 

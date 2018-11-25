@@ -11,7 +11,7 @@ interface IProps {
 }
 
 interface IState {
-    isFront: boolean
+    editMode: boolean
 }
 
 export class Experience extends React.Component<IProps, IState> {
@@ -22,17 +22,20 @@ export class Experience extends React.Component<IProps, IState> {
     private messageBox: HTMLHeadingElement | null;
     private blowSpeed: number;
     private blowedUp: boolean;
+    private editSuggestionShownUp: boolean;
 
     constructor(props: IProps) {
         super(props);
         this.blowSpeed = 0;
         this.blowingMode = false;
+        this.editSuggestionShownUp = false;
         this.state = {
-            isFront: true
+            editMode: false
         }
         window.onkeypress = (e: any) => {
-            if (e.key === 'f') {
-                this.setState({ isFront: !this.state.isFront });
+            if (e.key === 'e') {
+                this.closeMessageBox();
+                this.setState({ editMode: !this.state.editMode });
             }
         };
     }
@@ -80,10 +83,7 @@ export class Experience extends React.Component<IProps, IState> {
         return (<>
             <h2 className="message-box" ref={ref => this.messageBox = ref} />
             <div
-                className="experience"
-                style={{
-                    zIndex: this.state.isFront ? 999999999 : 1
-                }}
+                className={"experience" + (this.state.editMode ? ' edit-mode' : '')}
                 ref={ref => this.container = ref} />
         </>)
     }
@@ -108,13 +108,17 @@ export class Experience extends React.Component<IProps, IState> {
                 this.closeMessageBox();
             }
             if (this.blowedUp && this.blowSpeed < 0) {
-                this.showMessage('Blow again! harder this time', 2000, 'blow.svg ');
+                this.showMessage('Blow again! harder this time', 2000, 'blow.svg');
                 this.blowedUp = false;
             }
             if (timeline.time > 4.9) {
                 this.stopBlowingMode();
                 timeline.play();
             }
+        }
+        if (timeline.time > 50 && !this.editSuggestionShownUp) {
+            this.showMessage('To edit this animation press "E"', Infinity, 'animation.svg');
+            this.editSuggestionShownUp = true;
         }
     }
 
