@@ -1,0 +1,68 @@
+.intro {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 99999999999999;
+    font-family: 'Ubuntu Mono', monospace;
+    opacity: 1;
+    transition-duration: 2s;
+}
+.intro.hide {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+}
+.intro > .container {
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.intro > .container > img.logo {
+    width: 150px;
+}
+.intro > .container > h1 {
+    color: white;
+    font-size: 50px;
+    margin: 10px;
+}
+.intro > .container > h2 {
+    color: #c5c5c5;
+    font-size: 20px;
+    margin-bottom: 30px;
+    margin-top: 10px;
+    position: relative;
+}
+.intro > .container > button {
+    border: 4px solid white;
+    padding: 15px 20px;
+    color: white;
+    background: #000;
+    font-weight: bold;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 18px;
+    cursor: pointer;
+    outline: none;
+}
+.intro > .container > button:hover {
+    background: #333;
+}
+.intro > .container > button:active {
+    background: #fff;
+    color: black;
+}
+.intro > p.used-technologies {
+    color: white;
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+}
+.intro > p.used-technologies > a {
+    color: antiquewhite;
+}

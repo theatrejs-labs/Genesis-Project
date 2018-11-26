@@ -3,11 +3,9 @@
     height: 100%;
     z-index: 99999999;
     position: absolute;
-    box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
     transition-duration: 0.5s;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
 }
-
-.experience.edit-mode {}
 
 h2.message-box {
     position: absolute;
@@ -16,7 +14,7 @@ h2.message-box {
     color: white;
     margin: 0;
     font-size: 25px;
-    font-family: monospace;
+    font-family: 'Ubuntu Mono', monospace;
     transition-duration: 0.3s;
     padding: 0;
     z-index: 9999999999;

@@ -47,12 +47,10 @@ export class Experience extends React.Component<IProps, IState> {
         });
     }
 
-    public startBlowingMode(timeout = 10) {
-        setTimeout(() => {
-            this.blowingMode = true;
-            this.showMessage('Blow the world out', Infinity, 'blow.svg');
-            onBlow((volume: number) => { if (this.blowingMode) { this.onBlow(volume) } });
-        }, timeout);
+    public startBlowingMode() {
+        this.blowingMode = true;
+        this.showMessage('Blow the world out', Infinity, 'blow.svg');
+        onBlow((volume: number) => { if (this.blowingMode) { this.onBlow(volume) } });
     }
 
     public stopBlowingMode() {
@@ -63,7 +61,6 @@ export class Experience extends React.Component<IProps, IState> {
     public componentDidMount() {
         this.animation = new Animation(this.container, window.innerWidth, window.innerHeight, AnimationState);
         window.addEventListener('resize', this.handleResize.bind(this));
-        this.startBlowingMode(2 * 1000);
         this.changes();
     }
 
