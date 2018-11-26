@@ -1,5 +1,5 @@
 {
-  "revision": "50759d22-6d22-49fe-ba33-9ba65fd3b627",
+  "revision": "ca070a02-d8aa-4994-a5e2-f72ff0f33e2f",
   "definitionVersion": "0.1.0",
   "projectState": {
     "timelineTemplates": {
@@ -749,7 +749,7 @@
                   "type": "BezierCurvesOfScalarValues",
                   "points": [
                     {
-                      "time": 10,
+                      "time": 0,
                       "value": -0.5,
                       "interpolationDescriptor": {
                         "connected": true,
@@ -1123,8 +1123,23 @@
                   "type": "BezierCurvesOfScalarValues",
                   "points": [
                     {
-                      "value": 3,
                       "time": 0,
+                      "value": 0.01,
+                      "interpolationDescriptor": {
+                        "connected": true,
+                        "__descriptorType": "TimelinePointInterpolationDescriptor",
+                        "interpolationType": "CubicBezier",
+                        "handles": [
+                          0.8244356687581764,
+                          0.661290322580646,
+                          0.5,
+                          0
+                        ]
+                      }
+                    },
+                    {
+                      "value": 3,
+                      "time": 3000,
                       "interpolationDescriptor": {
                         "__descriptorType": "TimelinePointInterpolationDescriptor",
                         "connected": false,
@@ -1311,7 +1326,7 @@
                   "points": [
                     {
                       "value": 1,
-                      "time": 50,
+                      "time": 0,
                       "interpolationDescriptor": {
                         "__descriptorType": "TimelinePointInterpolationDescriptor",
                         "connected": true,
@@ -1609,7 +1624,7 @@
                   "type": "BezierCurvesOfScalarValues",
                   "points": [
                     {
-                      "time": 10,
+                      "time": 0,
                       "value": 40,
                       "interpolationDescriptor": {
                         "connected": true,
@@ -2581,8 +2596,8 @@
                   "type": "BezierCurvesOfScalarValues",
                   "points": [
                     {
-                      "value": 0.5,
-                      "time": 11.84604356737212,
+                      "value": 0.3,
+                      "time": 0,
                       "interpolationDescriptor": {
                         "__descriptorType": "TimelinePointInterpolationDescriptor",
                         "connected": true,

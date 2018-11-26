@@ -31,6 +31,8 @@ clipLag: how long you would like the "clipping" indicator to show
 Access the clipping through node.checkClipping(); use node.shutdown to get rid of it.
 */
 
+let recording = false;
+
 function createAudioMeter(audioContext, clipLevel, averaging, clipLag) {
     var processor = audioContext.createScriptProcessor(512);
     processor.onaudioprocess = volumeAudioProcess;
@@ -166,7 +168,6 @@ function onLevelChange(time) {
         state.average = state.levelsSum / state.levelsCount;
     }
     else {
-        console.log(volume, state.average)
         if (volume > ((state.average * 0.8) + 12)) {
             for (let cb of onBlowListeners) cb(volume);
         }

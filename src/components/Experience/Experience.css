@@ -7,9 +7,7 @@
     transition-duration: 0.5s;
 }
 
-.experience.edit-mode {
-    transform: scale(0.5) translateY(-250px);
-}
+.experience.edit-mode {}
 
 h2.message-box {
     position: absolute;

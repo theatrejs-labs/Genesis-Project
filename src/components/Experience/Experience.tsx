@@ -6,6 +6,8 @@ import { onBlow } from './tools/BreathDetection';
 
 import './Experience.css'
 
+declare var theatreUIRoot: any;
+
 interface IProps {
 
 }
@@ -38,6 +40,11 @@ export class Experience extends React.Component<IProps, IState> {
                 this.setState({ editMode: !this.state.editMode });
             }
         };
+        window.addEventListener('resize', () => {
+            setTimeout(() => {
+                this.setState({ editMode: this.state.editMode });
+            }, 100);
+        });
     }
 
     public startBlowingMode(timeout = 10) {
@@ -50,6 +57,7 @@ export class Experience extends React.Component<IProps, IState> {
 
     public stopBlowingMode() {
         this.blowingMode = false;
+        this.closeMessageBox();
     }
 
     public componentDidMount() {
@@ -80,16 +88,28 @@ export class Experience extends React.Component<IProps, IState> {
     }
 
     public render() {
+        const margin = 40;
+
+        const timeline = document.querySelector('.theatrejs-ui-root > div > div > div') as HTMLDivElement;
+        const timelineHeight = timeline ? timeline.offsetHeight : 0;
+        const size = window.innerHeight - timelineHeight - margin * 2;
+
+        const scaleOnEditMode: number = size / window.innerHeight;
+        const transformYOnEditMode: number = -((window.innerHeight / 2) - (size / 2 + margin - 5));
+
         return (<>
             <h2 className="message-box" ref={ref => this.messageBox = ref} />
             <div
                 className={"experience" + (this.state.editMode ? ' edit-mode' : '')}
+                style={{
+                    transform: !this.state.editMode ? `` : `translateY(${ transformYOnEditMode }px) scale(${ scaleOnEditMode })`
+                }}
                 ref={ref => this.container = ref} />
         </>)
     }
 
     private onBlow(volume: number): void {
-        this.blowSpeed += 0.0012;
+        this.blowSpeed += 0.0014;
         if (this.blowSpeed > 0.018) { this.blowSpeed = 0.018; }
     }
 
@@ -113,11 +133,13 @@ export class Experience extends React.Component<IProps, IState> {
             }
             if (timeline.time > 1.7) {
                 this.stopBlowingMode();
-                timeline.play();
+                timeline.play({ iteration: 1 });
             }
         }
         if (timeline.time > 55 && !this.editSuggestionShownUp) {
-            this.showMessage('To edit this animation press "E"', Infinity, 'animation.svg');
+            if (!this.state.editMode) {
+                this.showMessage('To edit this animation press "E"', Infinity, 'animation.svg');
+            }
             this.editSuggestionShownUp = true;
         }
     }
