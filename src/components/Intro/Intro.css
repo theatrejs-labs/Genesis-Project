@@ -8,11 +8,11 @@
     z-index: 99999999999999;
     font-family: 'Ubuntu Mono', monospace;
     opacity: 1;
-    transition-duration: 2s;
+    transition-duration: 1s;
 }
 .intro.hide {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.95);
     pointer-events: none;
 }
 .intro > .container {
@@ -27,8 +27,8 @@
 }
 .intro > .container > h1 {
     color: white;
-    font-size: 50px;
-    margin: 10px;
+    font-size: 65px;
+    margin-bottom: 15px;
 }
 .intro > .container > h2 {
     color: #c5c5c5;

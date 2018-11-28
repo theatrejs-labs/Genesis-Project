@@ -18,7 +18,7 @@ export class Intro extends React.Component<IProps, IState> {
         return (
             <div className="intro" ref={ref => this.container = ref}>
                 <div className="container">
-                    <img className="logo" src="./images/genesis.svg" />
+                    {/* <img className="logo" src="./images/genesis.svg" /> */}
                     <h1>Genesis</h1>
                     <h2>Alpha moments of everything</h2>
                     <button onClick={() => this.goThroughExperience()}>Go through experience</button>

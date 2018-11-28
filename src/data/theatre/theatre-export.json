@@ -1,5 +1,5 @@
 {
-  "revision": "ca070a02-d8aa-4994-a5e2-f72ff0f33e2f",
+  "revision": "757bd976-c863-4a47-a565-5bb6efdba5c9",
   "definitionVersion": "0.1.0",
   "projectState": {
     "timelineTemplates": {
@@ -257,7 +257,7 @@
                   "type": "BezierCurvesOfScalarValues",
                   "points": [
                     {
-                      "value": 0.025,
+                      "value": 0.008,
                       "time": 12950,
                       "interpolationDescriptor": {
                         "__descriptorType": "TimelinePointInterpolationDescriptor",
