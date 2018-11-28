@@ -2,7 +2,7 @@ import * as React from 'react';
 import AnimationState from '../../data/theatre/theatre-export.json';
 import { Animation } from './Animation'
 
-import { onBlow } from './tools/BreathDetection';
+import { microphoneEvents, onBlow } from './tools/BreathDetection';
 
 import './Experience.css'
 
@@ -13,7 +13,8 @@ interface IProps {
 }
 
 interface IState {
-    editMode: boolean
+    editMode: boolean,
+    microphoneGranted: boolean
 }
 
 export class Experience extends React.Component<IProps, IState> {
@@ -32,7 +33,8 @@ export class Experience extends React.Component<IProps, IState> {
         this.blowingMode = false;
         this.editSuggestionShownUp = false;
         this.state = {
-            editMode: false
+            editMode: false,
+            microphoneGranted: false
         }
         window.onkeypress = (e: any) => {
             if (e.key === 'e') {
@@ -45,12 +47,20 @@ export class Experience extends React.Component<IProps, IState> {
                 this.setState({ editMode: this.state.editMode });
             }, 100);
         });
+        microphoneEvents.onGranted = () => {
+            this.setState({ microphoneGranted: true });
+        }
     }
 
     public startBlowingMode() {
-        this.blowingMode = true;
-        this.showMessage('Blow the world out', Infinity, 'blow.svg');
-        onBlow((volume: number) => { if (this.blowingMode) { this.onBlow(volume) } });
+        if (this.state.microphoneGranted) {
+            this.blowingMode = true;
+            this.showMessage('Blow the world out', Infinity, 'blow.svg');
+            onBlow((volume: number) => { if (this.blowingMode) { this.onBlow(volume) } });
+        } else {
+            this.showMessage(`No microphone detected`, 5000, 'no-mic.svg');
+            setTimeout(() => this.animation.theatre.timeline.play(), 8000);
+        }
     }
 
     public stopBlowingMode() {

@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 let recording = false;
+let rafID = null;
 
 function createAudioMeter(audioContext, clipLevel, averaging, clipLag) {
     var processor = audioContext.createScriptProcessor(512);
@@ -85,15 +86,8 @@ function volumeAudioProcess(event) {
 
 var audioContext = null;
 var meter = null;
-var canvasContext = null;
-var WIDTH = 500;
-var HEIGHT = 50;
-var rafID = null;
 
 window.onload = function () {
-
-    // grab our canvas
-    canvasContext = document.createElement('canvas').getContext("2d");
 
     // monkeypatch Web Audio
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -128,7 +122,7 @@ window.onload = function () {
 }
 
 function onMicrophoneDenied() {
-    console.log('Stream generation failed.');
+    microphoneEvents.onDenied();
 }
 
 var mediaStreamSource = null;
@@ -143,6 +137,7 @@ function onMicrophoneGranted(stream) {
 
     // kick off the visual updating
     onLevelChange();
+    microphoneEvents.onGranted();
 }
 
 const state = {
@@ -170,4 +165,9 @@ function onLevelChange(time) {
 
 export const onBlow = (cb) => {
     onBlowListeners.push(cb);
+}
+
+export const microphoneEvents = {
+    onDenied: () => {},
+    onGranted: () => {}
 }
